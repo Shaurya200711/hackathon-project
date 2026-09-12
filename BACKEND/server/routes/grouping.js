@@ -14,11 +14,16 @@ router.post("/group", async (req, res) => {
 
     try {
         const apiKey = process.env.GEMINI_API_KEY;
+        const testMode = process.env.TEST_MODE === "true";
 
-        if (!apiKey) {
+        if (!apiKey && !testMode) {
             return res.status(500).json({
                 error: "GEMINI_API_KEY is missing"
             });
+        }
+
+        if (testMode) {
+            return handleTestGrouping(tabs, res);
         }
 
         const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
@@ -102,5 +107,26 @@ Rules:
         });
     }
 });
+
+function handleTestGrouping(tabs, res) {
+    const domains = {};
+    tabs.forEach(tab => {
+        try {
+            const domain = new URL(tab.url).hostname.replace("www.", "");
+            if (!domains[domain]) domains[domain] = [];
+            domains[domain].push(tab.id);
+        } catch (e) {
+            if (!domains["other"]) domains["other"] = [];
+            domains["other"].push(tab.id);
+        }
+    });
+
+    const groups = Object.entries(domains).map(([domain, tabIds]) => ({
+        name: domain.charAt(0).toUpperCase() + domain.slice(1),
+        tabIds
+    }));
+
+    return res.json({ groups });
+}
 
 module.exports = router;
