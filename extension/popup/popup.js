@@ -15,14 +15,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // =============================
 
 function initTheme() {
-  const savedTheme = localStorage.getItem("tabflow_theme") || "dark";
+  const savedTheme = localStorage.getItem("zenqt_theme") || "dark";
   document.documentElement.setAttribute("data-theme", savedTheme);
 
   document.getElementById("theme-toggle-btn")?.addEventListener("click", () => {
     const currentTheme = document.documentElement.getAttribute("data-theme");
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem("tabflow_theme", nextTheme);
+    localStorage.setItem("zenqt_theme", nextTheme);
   });
 }
 
@@ -93,7 +93,7 @@ function setupGlobalActions() {
   document.getElementById("sort-title")?.addEventListener("click", () => { sortByTitle(); closeDropdowns(); });
   document.getElementById("sort-recent")?.addEventListener("click", () => { sortByRecent(); closeDropdowns(); });
 
-  // Dedupe Handlers
+  // Clean Up Handlers
   document.getElementById("dedup-url")?.addEventListener("click", () => { deduplicateURLs(); closeDropdowns(); });
   document.getElementById("dedup-domain")?.addEventListener("click", () => { deduplicateDomains(); closeDropdowns(); });
 }

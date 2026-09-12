@@ -67,29 +67,26 @@
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 680px;
+  height: 560px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 /* APP LAYOUT FRAMEWORK */
 .app-layout {
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  flex-direction: column;
+  width: 680px;
+  height: 560px;
 }
 
 /* SIDEBAR */
 .sidebar {
-  width: 260px;
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 16px;
-  flex-shrink: 0;
+  display: none;
 }
 
 .brand {
@@ -194,7 +191,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -202,10 +199,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-primary);
-  gap: 20px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 /* SEARCH */
@@ -214,26 +212,27 @@ html, body {
   display: flex;
   align-items: center;
   flex: 1;
-  max-width: 500px;
+  min-width: 200px;
 }
 
 .search-icon {
   position: absolute;
-  left: 14px;
+  left: 10px;
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: 16px;
   pointer-events: none;
 }
 
 .search-container input {
   width: 100%;
-  padding: 10px 38px 10px 42px;
+  padding: 6px 30px 6px 32px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-primary);
   background-color: var(--bg-secondary);
   transition: all var(--transition-fast);
+  height: 32px;
 }
 
 .search-container input:focus {
@@ -251,25 +250,27 @@ html, body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 /* BUTTON CONTROLS */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
+  gap: 4px;
+  padding: 6px 11px;
+  font-size: 12px;
   font-weight: 600;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .btn .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .btn-primary {
@@ -306,7 +307,8 @@ html, body {
   background: transparent;
   border: none;
   color: var(--accent-color);
-  padding: 4px 8px;
+  padding: 2px 4px;
+  font-size: 11px;
 }
 
 .btn-link:hover {
@@ -318,12 +320,13 @@ html, body {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
   border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
+  font-size: 14px;
 }
 
 .icon-btn:hover {
@@ -395,7 +398,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px 32px;
+  padding: 12px 16px;
   overflow: hidden;
 }
 
@@ -403,18 +406,19 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .toolbar-secondary h2 {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .quick-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .list-wrapper {
@@ -433,36 +437,36 @@ html, body {
 }
 
 .tab-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* TAB CARDS */
 .tab-card {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   position: relative;
-  height: 110px;
+  height: auto;
+  gap: 8px;
 }
 
 .tab-card:hover {
   border-color: var(--accent-color);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  background-color: var(--bg-hover);
 }
 
 .tab-card.active-tab {
   border-color: var(--accent-color);
   background-color: var(--accent-light);
+  font-weight: 600;
 }
 
 .tab-card.selected {
@@ -473,26 +477,28 @@ html, body {
 .tab-card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex: 1;
 }
 
 .tab-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   accent-color: var(--accent-color);
+  flex-shrink: 0;
 }
 
 .tab-favicon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
   object-fit: contain;
   flex-shrink: 0;
 }
 
 .tab-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -501,7 +507,7 @@ html, body {
 }
 
 .tab-card-body {
-  margin-top: 6px;
+  display: none;
 }
 
 .tab-url {
@@ -515,20 +521,18 @@ html, body {
 .tab-card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-color);
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .tab-badges {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
 }
 
 .tab-status-icon {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
@@ -537,7 +541,9 @@ html, body {
 }
 
 .close-btn {
-  opacity: 0.6;
+  opacity: 0.5;
+  padding: 2px 4px;
+  font-size: 14px !important;
 }
 
 .tab-card:hover .close-btn {
@@ -555,39 +561,53 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  height: 100%;
   color: var(--text-secondary);
-  gap: 10px;
+  gap: 8px;
   text-align: center;
+  padding: 20px;
 }
 
 .empty-state .material-symbols-outlined {
-  font-size: 48px;
+  font-size: 32px;
   opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 13px;
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: 11px;
+  margin: 0;
 }
 
 /* FOOTER */
 .app-footer {
-  padding: 12px 32px;
+  padding: 8px 16px;
   border-top: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
-  font-size: 12px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .badge {
   font-weight: 600;
   color: var(--text-primary);
+  font-size: 10px;
 }
 
 .badge-subtle {
   color: var(--text-secondary);
+  font-size: 10px;
 }
 
 .dot-separator {
-  margin: 0 8px;
+  margin: 0 6px;
   color: var(--text-muted);
 }
 
