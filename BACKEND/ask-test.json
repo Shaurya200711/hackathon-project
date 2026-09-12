@@ -1,0 +1,20 @@
+{
+  "question": "Which tabs are related to programming?",
+  "tabs": [
+    {
+      "id": 1,
+      "title": "JavaScript Tutorial",
+      "url": "https://example.com/javascript"
+    },
+    {
+      "id": 2,
+      "title": "React Documentation",
+      "url": "https://example.com/react"
+    },
+    {
+      "id": 3,
+      "title": "Cricket News",
+      "url": "https://example.com/cricket"
+    }
+  ]
+}

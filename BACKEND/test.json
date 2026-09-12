@@ -1,0 +1,15 @@
+{
+  "query": "javascript",
+  "tabs": [
+    {
+      "id": 1,
+      "title": "Yamaha R15 Review",
+      "url": "https://example.com"
+    },
+    {
+      "id": 2,
+      "title": "JavaScript Tutorial",
+      "url": "https://example.org"
+    }
+  ]
+}
