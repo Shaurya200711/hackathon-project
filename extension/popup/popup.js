@@ -1,153 +1,564 @@
-
 let allTabs = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+
   fetchAndRenderTabs();
 
-  document.getElementById('search-input')?.addEventListener('input', handleSearch);
-  document.getElementById('auto-group-btn')?.addEventListener('click', handleAutoGroup);
-  document.getElementById('sort-domain-btn')?.addEventListener('click', handleSortTabs);
-  document.getElementById('dedup-btn')?.addEventListener('click', handleDeduplicate);
-  document.getElementById('popout-btn')?.addEventListener('click', handlePopout);
+  setupDropdowns();
+
+  document
+    .getElementById("search-input")
+    ?.addEventListener("input", handleSearch);
+
+  document
+    .getElementById("clear-search-btn")
+    ?.addEventListener("click", clearSearch);
+
+  document
+    .getElementById("popout-btn")
+    ?.addEventListener("click", openPopout);
+
+
+  // GROUP OPTIONS
+  document
+    .getElementById("group-domain")
+    ?.addEventListener("click", () => {
+      groupByDomain();
+      closeDropdowns();
+    });
+
+  document
+    .getElementById("group-window")
+    ?.addEventListener("click", () => {
+      groupByWindow();
+      closeDropdowns();
+    });
+
+  document
+    .getElementById("group-none")
+    ?.addEventListener("click", () => {
+      removeGroups();
+      closeDropdowns();
+    });
+
+
+  // SORT OPTIONS
+  document
+    .getElementById("sort-domain")
+    ?.addEventListener("click", () => {
+      sortByDomain();
+      closeDropdowns();
+    });
+
+  document
+    .getElementById("sort-title")
+    ?.addEventListener("click", () => {
+      sortByTitle();
+      closeDropdowns();
+    });
+
+  document
+    .getElementById("sort-recent")
+    ?.addEventListener("click", () => {
+      sortByRecent();
+      closeDropdowns();
+    });
+
+
+  // DEDUPE OPTIONS
+  document
+    .getElementById("dedup-url")
+    ?.addEventListener("click", () => {
+      deduplicateURLs();
+      closeDropdowns();
+    });
+
+  document
+    .getElementById("dedup-domain")
+    ?.addEventListener("click", () => {
+      deduplicateDomains();
+      closeDropdowns();
+    });
+
 });
 
-// 1. Fetch Open Tabs
-async function fetchAndRenderTabs() {
-  allTabs = await chrome.tabs.query({ currentWindow: true });
-  renderTabList(allTabs);
-}
 
-// 2. Render List View
-function renderTabList(tabsToRender) {
-  const tabListContainer = document.getElementById('tab-list');
-  const emptyState = document.getElementById('empty-state');
-  const tabCountBadge = document.getElementById('tab-count');
+// =============================
+// DROPDOWNS
+// =============================
 
-  tabListContainer.innerHTML = '';
-  tabCountBadge.textContent = `${tabsToRender.length} tabs`;
+function setupDropdowns() {
 
-  if (tabsToRender.length === 0) {
-    emptyState.classList.remove('hidden');
-    return;
-  }
-  emptyState.classList.add('hidden');
+  const dropdownButtons = document.querySelectorAll(".dropdown-btn");
 
-  tabsToRender.forEach(tab => {
-    const li = document.createElement('li');
-    li.className = 'tab-item';
+  dropdownButtons.forEach(button => {
 
-    const favicon = document.createElement('img');
-    favicon.className = 'tab-favicon';
-    favicon.src = tab.favIconUrl || 'https://www.google.com/s2/favicons?domain=chrome';
-    favicon.onerror = () => { favicon.src = 'https://www.google.com/s2/favicons?domain=chrome'; };
+    button.addEventListener("click", (event) => {
 
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'tab-info';
+      event.stopPropagation();
 
-    const titleSpan = document.createElement('div');
-    titleSpan.className = 'tab-title';
-    titleSpan.textContent = tab.title;
+      const dropdown = button.closest(".dropdown");
 
-    const urlSpan = document.createElement('div');
-    urlSpan.className = 'tab-url';
-    urlSpan.textContent = tab.url;
+      document.querySelectorAll(".dropdown").forEach(item => {
 
-    infoDiv.append(titleSpan, urlSpan);
+        if (item !== dropdown) {
+          item.classList.remove("active");
+        }
 
-    // Switch focus to tab on click
-    li.addEventListener('click', () => {
-      chrome.tabs.update(tab.id, { active: true });
+      });
+
+      dropdown.classList.toggle("active");
+
     });
 
-    // Delete single tab button
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'icon-btn close-btn';
-    closeBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
-    closeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      chrome.tabs.remove(tab.id);
-      li.remove();
-      allTabs = allTabs.filter(t => t.id !== tab.id);
-      tabCountBadge.textContent = `${allTabs.length} tabs`;
-    });
-
-    li.append(favicon, infoDiv, closeBtn);
-    tabListContainer.appendChild(li);
   });
+
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", () => {
+    closeDropdowns();
+  });
+
 }
 
-// 3. Search Filter
-function handleSearch(e) {
-  const query = e.target.value.toLowerCase().trim();
-  const filtered = allTabs.filter(tab => 
-    tab.title.toLowerCase().includes(query) || 
-    tab.url.toLowerCase().includes(query)
-  );
-  renderTabList(filtered);
+
+function closeDropdowns() {
+
+  document.querySelectorAll(".dropdown").forEach(dropdown => {
+    dropdown.classList.remove("active");
+  });
+
 }
 
-// 4. Auto-Group Tabs by Website Domain
-async function handleAutoGroup() {
-  const domainMap = {};
+
+// =============================
+// GET TABS
+// =============================
+
+function fetchAndRenderTabs() {
+
+  chrome.tabs.query({}, tabs => {
+
+    allTabs = tabs;
+
+    renderTabs(allTabs);
+
+  });
+
+}
+
+
+// =============================
+// DISPLAY TABS
+// =============================
+
+function renderTabs(tabs) {
+
+  const list = document.getElementById("tab-list");
+  const emptyState = document.getElementById("empty-state");
+  const count = document.getElementById("tab-count");
+
+  list.innerHTML = "";
+
+  count.textContent =
+    tabs.length + (tabs.length === 1 ? " tab" : " tabs");
+
+
+  if (tabs.length === 0) {
+
+    emptyState.classList.remove("hidden");
+
+    return;
+
+  }
+
+  emptyState.classList.add("hidden");
+
+
+  tabs.forEach(tab => {
+
+    const li = document.createElement("li");
+
+    li.className = "tab-item";
+
+    li.innerHTML = `
+      <div class="tab-info">
+
+        <div class="tab-title">
+          ${escapeHTML(tab.title || "Untitled")}
+        </div>
+
+        <div class="tab-url">
+          ${escapeHTML(tab.url || "")}
+        </div>
+
+      </div>
+
+      <button
+        class="close-tab"
+        data-id="${tab.id}"
+        title="Close tab"
+      >
+        <span class="material-symbols-outlined">
+          close
+        </span>
+      </button>
+    `;
+
+
+    li.addEventListener("click", event => {
+
+      if (
+        event.target.closest(".close-tab")
+      ) {
+        return;
+      }
+
+      chrome.tabs.update(tab.id, {
+        active: true
+      });
+
+      chrome.windows.update(tab.windowId, {
+        focused: true
+      });
+
+    });
+
+
+    li.querySelector(".close-tab")
+      .addEventListener("click", () => {
+
+        chrome.tabs.remove(tab.id);
+
+        allTabs = allTabs.filter(
+          t => t.id !== tab.id
+        );
+
+        renderTabs(allTabs);
+
+      });
+
+
+    list.appendChild(li);
+
+  });
+
+}
+
+
+// =============================
+// SEARCH
+// =============================
+
+function handleSearch(event) {
+
+  const query =
+    event.target.value.toLowerCase().trim();
+
+  const clearButton =
+    document.getElementById("clear-search-btn");
+
+
+  if (query) {
+    clearButton.classList.remove("hidden");
+  } else {
+    clearButton.classList.add("hidden");
+  }
+
+
+  const filteredTabs = allTabs.filter(tab => {
+
+    const title =
+      (tab.title || "").toLowerCase();
+
+    const url =
+      (tab.url || "").toLowerCase();
+
+    return (
+      title.includes(query) ||
+      url.includes(query)
+    );
+
+  });
+
+
+  renderTabs(filteredTabs);
+
+}
+
+
+function clearSearch() {
+
+  const input =
+    document.getElementById("search-input");
+
+  input.value = "";
+
+  document
+    .getElementById("clear-search-btn")
+    .classList.add("hidden");
+
+  renderTabs(allTabs);
+
+}
+
+
+// =============================
+// GROUP BY DOMAIN
+// =============================
+
+function groupByDomain() {
+
+  const groups = {};
 
   allTabs.forEach(tab => {
+
     try {
-      const domain = new URL(tab.url).hostname.replace('www.', '');
-      if (!domainMap[domain]) domainMap[domain] = [];
-      domainMap[domain].push(tab.id);
-    } catch (e) {
-      // Ignore non-standard Chrome URLs
+
+      const domain =
+        new URL(tab.url).hostname;
+
+      if (!groups[domain]) {
+        groups[domain] = [];
+      }
+
+      groups[domain].push(tab);
+
+    } catch {
+      console.log("Invalid URL:", tab.url);
     }
+
   });
 
-  for (const [domain, tabIds] of Object.entries(domainMap)) {
-    if (tabIds.length > 1) {
-      const group = await chrome.tabs.group({ tabIds });
-      await chrome.tabGroups.update(group, { title: domain.toUpperCase() });
-    }
-  }
+
+  console.log("Grouped tabs:", groups);
+
 }
 
-// 5. Sort Tabs Alphabetically by Domain
-async function handleSortTabs() {
+
+// =============================
+// GROUP BY WINDOW
+// =============================
+
+function groupByWindow() {
+
+  const groups = {};
+
+  allTabs.forEach(tab => {
+
+    if (!groups[tab.windowId]) {
+      groups[tab.windowId] = [];
+    }
+
+    groups[tab.windowId].push(tab);
+
+  });
+
+
+  console.log("Tabs grouped by window:", groups);
+
+}
+
+
+// =============================
+// REMOVE GROUPS
+// =============================
+
+function removeGroups() {
+
+  console.log("Remove groups selected");
+
+}
+
+
+// =============================
+// SORT BY DOMAIN
+// =============================
+
+function sortByDomain() {
+
   const sortedTabs = [...allTabs].sort((a, b) => {
-    const domainA = new URL(a.url).hostname;
-    const domainB = new URL(b.url).hostname;
+
+    const domainA =
+      getDomain(a.url);
+
+    const domainB =
+      getDomain(b.url);
+
     return domainA.localeCompare(domainB);
+
   });
 
-  for (let i = 0; i < sortedTabs.length; i++) {
-    await chrome.tabs.move(sortedTabs[i].id, { index: i });
-  }
-  fetchAndRenderTabs();
+  renderTabs(sortedTabs);
+
 }
 
-// 6. Deduplicate Duplicate URLs
-async function handleDeduplicate() {
-  const seenUrls = new Set();
+
+// =============================
+// SORT BY TITLE
+// =============================
+
+function sortByTitle() {
+
+  const sortedTabs = [...allTabs].sort((a, b) => {
+
+    return (a.title || "").localeCompare(
+      b.title || ""
+    );
+
+  });
+
+  renderTabs(sortedTabs);
+
+}
+
+
+// =============================
+// SORT BY RECENT
+// =============================
+
+function sortByRecent() {
+
+  const sortedTabs = [...allTabs].sort((a, b) => {
+
+    return b.lastAccessed - a.lastAccessed;
+
+  });
+
+  renderTabs(sortedTabs);
+
+}
+
+
+// =============================
+// DEDUPLICATE URLS
+// =============================
+
+function deduplicateURLs() {
+
+  const seen = new Set();
+
   const duplicateIds = [];
 
   allTabs.forEach(tab => {
-    if (seenUrls.has(tab.url)) {
+
+    if (seen.has(tab.url)) {
+
       duplicateIds.push(tab.id);
+
     } else {
-      seenUrls.add(tab.url);
+
+      seen.add(tab.url);
+
     }
+
   });
+
 
   if (duplicateIds.length > 0) {
-    await chrome.tabs.remove(duplicateIds);
-    fetchAndRenderTabs();
+
+    chrome.tabs.remove(duplicateIds);
+
+    allTabs = allTabs.filter(
+      tab => !duplicateIds.includes(tab.id)
+    );
+
+    renderTabs(allTabs);
+
   }
+
 }
 
-// 7. Pop-out Window Option
-function handlePopout() {
-  chrome.windows.create({
-    url: chrome.runtime.getURL('src/popup/popup.html?isPopout=true'),
-    type: 'popup',
-    width: 380,
-    height: 560
+
+// =============================
+// DEDUPLICATE DOMAINS
+// =============================
+
+function deduplicateDomains() {
+
+  const seen = new Set();
+
+  const duplicateIds = [];
+
+
+  allTabs.forEach(tab => {
+
+    const domain =
+      getDomain(tab.url);
+
+    if (!domain) return;
+
+
+    if (seen.has(domain)) {
+
+      duplicateIds.push(tab.id);
+
+    } else {
+
+      seen.add(domain);
+
+    }
+
   });
-  window.close();
+
+
+  if (duplicateIds.length > 0) {
+
+    chrome.tabs.remove(duplicateIds);
+
+    allTabs = allTabs.filter(
+      tab => !duplicateIds.includes(tab.id)
+    );
+
+    renderTabs(allTabs);
+
+  }
+
+}
+
+
+// =============================
+// POP OUT
+// =============================
+
+function openPopout() {
+
+  chrome.windows.create({
+    url: chrome.runtime.getURL("popup.html"),
+    type: "popup",
+    width: 600,
+    height: 700
+  });
+
+}
+
+
+// =============================
+// HELPERS
+// =============================
+
+function getDomain(url) {
+
+  try {
+
+    return new URL(url).hostname;
+
+  } catch {
+
+    return "";
+
+  }
+
+}
+
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent = text;
+
+  return div.innerHTML;
+
 }

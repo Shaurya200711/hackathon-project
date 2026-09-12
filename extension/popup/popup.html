@@ -5,87 +5,245 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TabFlow Manager</title>
 
-  <!-- Google Fonts & Icons (Optimized loading) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+  />
 
   <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
+
   <div class="app-container">
-    
-    <!-- Header Controls -->
+
+    <!-- HEADER -->
     <header class="app-header">
+
       <div class="brand">
-        <span class="material-symbols-outlined brand-icon" aria-hidden="true">tab</span>
+        <span class="material-symbols-outlined brand-icon">
+          tab
+        </span>
         <h1 class="brand-title">TabFlow</h1>
       </div>
 
-      <nav class="header-actions" aria-label="Tab management actions">
-        <button id="auto-group-btn" class="btn btn-primary" type="button" title="Group tabs by domain name" aria-label="Group tabs by domain name">
-          <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
-          <span>Group</span>
+      <nav class="header-actions">
+
+        <!-- GROUP DROPDOWN -->
+        <div class="dropdown">
+          <button
+            id="group-btn"
+            class="btn btn-primary dropdown-btn"
+            type="button"
+          >
+            <span class="material-symbols-outlined">
+              auto_awesome
+            </span>
+            <span>Group</span>
+            <span class="material-symbols-outlined arrow">
+              expand_more
+            </span>
+          </button>
+
+          <div id="group-menu" class="dropdown-menu">
+
+            <button id="group-domain">
+              <span class="material-symbols-outlined">language</span>
+              Group by Domain
+            </button>
+
+            <button id="group-window">
+              <span class="material-symbols-outlined">window</span>
+              Group by Window
+            </button>
+
+            <button id="group-none">
+              <span class="material-symbols-outlined">tab_unselected</span>
+              Remove Groups
+            </button>
+
+          </div>
+        </div>
+
+
+        <!-- SORT DROPDOWN -->
+        <div class="dropdown">
+
+          <button
+            id="sort-btn"
+            class="btn btn-secondary dropdown-btn"
+            type="button"
+          >
+            <span class="material-symbols-outlined">
+              sort_by_alpha
+            </span>
+            <span>Sort</span>
+            <span class="material-symbols-outlined arrow">
+              expand_more
+            </span>
+          </button>
+
+          <div id="sort-menu" class="dropdown-menu">
+
+            <button id="sort-domain">
+              <span class="material-symbols-outlined">language</span>
+              Sort by Website
+            </button>
+
+            <button id="sort-title">
+              <span class="material-symbols-outlined">title</span>
+              Sort by Title
+            </button>
+
+            <button id="sort-recent">
+              <span class="material-symbols-outlined">schedule</span>
+              Recently Used
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- DEDUPE DROPDOWN -->
+        <div class="dropdown">
+
+          <button
+            id="dedup-btn"
+            class="btn btn-secondary dropdown-btn"
+            type="button"
+          >
+            <span class="material-symbols-outlined">
+              content_copy
+            </span>
+            <span>Dedupe</span>
+            <span class="material-symbols-outlined arrow">
+              expand_more
+            </span>
+          </button>
+
+          <div id="dedup-menu" class="dropdown-menu">
+
+            <button id="dedup-url">
+              <span class="material-symbols-outlined">link</span>
+              Duplicate URLs
+            </button>
+
+            <button id="dedup-domain">
+              <span class="material-symbols-outlined">language</span>
+              Duplicate Domains
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- POPOUT -->
+        <button
+          id="popout-btn"
+          class="icon-btn"
+          type="button"
+          title="Open in standalone window"
+        >
+          <span class="material-symbols-outlined">
+            open_in_new
+          </span>
         </button>
 
-        <button id="sort-domain-btn" class="btn btn-secondary" type="button" title="Sort tabs alphabetically by website" aria-label="Sort tabs alphabetically by website">
-          <span class="material-symbols-outlined" aria-hidden="true">sort_by_alpha</span>
-          <span>Sort</span>
-        </button>
-
-        <button id="dedup-btn" class="btn btn-secondary" type="button" title="Close duplicate URLs" aria-label="Close duplicate URLs">
-          <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
-          <span>Dedupe</span>
-        </button>
-
-        <button id="popout-btn" class="icon-btn" type="button" title="Open in standalone window" aria-label="Open in standalone window">
-          <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
-        </button>
       </nav>
     </header>
 
-    <!-- Main Content -->
+
+    <!-- MAIN -->
     <main class="app-body">
-      <!-- Search Container -->
+
+      <!-- SEARCH -->
       <div class="search-container" role="search">
-        <label for="search-input" class="sr-only">Search tabs</label>
-        <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
-        <input 
-          type="search" 
-          id="search-input" 
-          placeholder="Search tabs by title or URL..." 
-          autofocus 
-          autocomplete="off" 
-          spellcheck="false" 
-          aria-controls="tab-list"
-          aria-expanded="true"
+
+        <label for="search-input" class="sr-only">
+          Search tabs
+        </label>
+
+        <span class="material-symbols-outlined search-icon">
+          search
+        </span>
+
+        <input
+          type="search"
+          id="search-input"
+          placeholder="Search tabs by title or URL..."
+          autofocus
+          autocomplete="off"
+          spellcheck="false"
         />
-        <button id="clear-search-btn" class="icon-btn hidden" type="button" aria-label="Clear search query">
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+
+        <button
+          id="clear-search-btn"
+          class="icon-btn hidden"
+          type="button"
+        >
+          <span class="material-symbols-outlined">
+            close
+          </span>
         </button>
+
       </div>
 
-      <!-- Tab List Container -->
+
+      <!-- TAB LIST -->
       <div class="list-wrapper">
-        <ul id="tab-list" class="tab-list" aria-live="polite" aria-label="Open tabs list"></ul>
-        
-        <div id="empty-state" class="empty-state hidden" role="status" aria-live="polite">
-          <span class="material-symbols-outlined" aria-hidden="true">tab_unselected</span>
-          <p>No open tabs match your query.</p>
+
+        <ul
+          id="tab-list"
+          class="tab-list"
+        ></ul>
+
+        <div
+          id="empty-state"
+          class="empty-state hidden"
+        >
+          <span class="material-symbols-outlined">
+            tab_unselected
+          </span>
+
+          <p>
+            No open tabs match your query.
+          </p>
         </div>
+
       </div>
+
     </main>
 
-    <!-- Footer Status Bar -->
+
+    <!-- FOOTER -->
     <footer class="app-footer">
+
       <div class="badge-group">
-        <span id="tab-count" class="badge" aria-live="polite">0 tabs</span>
+        <span
+          id="tab-count"
+          class="badge"
+        >
+          0 tabs
+        </span>
       </div>
+
     </footer>
 
   </div>
 
-  <script type="module" src="render.js"></script>
+
+  <!-- IMPORTANT -->
+  <script src="popup.js"></script>
+
 </body>
 </html>
