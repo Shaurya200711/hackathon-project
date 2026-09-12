@@ -142,6 +142,12 @@
             </div>
           </div>
 
+          <!-- AI ORGANIZE BUTTON -->
+          <button id="organize-ai-btn" class="btn btn-primary" type="button">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span>Organize with AI</span>
+          </button>
+
           <!-- MULTI-SELECT UTILITIES -->
           <button id="close-selected-btn" class="btn btn-danger hidden" type="button">
             <span class="material-symbols-outlined">delete</span>
@@ -184,6 +190,40 @@
           <span id="window-count" class="badge-subtle">0 active windows</span>
         </div>
       </footer>
+    </div>
+  </div>
+
+  <!-- AI ORGANIZATION MODAL -->
+  <div id="ai-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>AI Tab Organization</h2>
+        <button id="modal-close-btn" class="icon-btn" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div id="ai-loading" class="ai-loading hidden">
+          <div class="spinner"></div>
+          <p>Analyzing your tabs...</p>
+        </div>
+
+        <div id="ai-groups-list" class="ai-groups-list hidden">
+          <!-- Groups will be rendered here -->
+        </div>
+
+        <div id="ai-error" class="ai-error hidden">
+          <span class="material-symbols-outlined">error</span>
+          <p id="ai-error-text"></p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="modal-cancel-btn" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="modal-apply-btn" class="btn btn-primary" type="button">Apply Groups</button>
+      </div>
     </div>
   </div>
 

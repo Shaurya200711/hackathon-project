@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "zenQT",
+  "version": "1.0.0",
+  "description": "Organize your browser tabs intelligently with AI",
+  "permissions": [
+    "tabs",
+    "tabGroups"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "zenQT - Tab Manager"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "icons": {
+    "16": "images/icon-16.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  }
+}

@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupDropdowns();
   setupNavigation();
   setupGlobalActions();
+  setupAIModal();
 });
 
 // =============================
@@ -427,4 +428,125 @@ function escapeHTML(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+// =============================
+// AI MODAL & ORGANIZATION
+// =============================
+
+let currentAIGroups = null;
+
+function setupAIModal() {
+  document.getElementById("organize-ai-btn")?.addEventListener("click", organizeWithAI);
+  document.getElementById("modal-close-btn")?.addEventListener("click", closeAIModal);
+  document.getElementById("modal-cancel-btn")?.addEventListener("click", closeAIModal);
+  document.getElementById("modal-apply-btn")?.addEventListener("click", applyAIGroups);
+
+  document.querySelector(".modal-overlay")?.addEventListener("click", closeAIModal);
+}
+
+function openAIModal() {
+  const modal = document.getElementById("ai-modal");
+  modal?.classList.remove("hidden");
+}
+
+function closeAIModal() {
+  const modal = document.getElementById("ai-modal");
+  modal?.classList.add("hidden");
+  currentAIGroups = null;
+}
+
+async function organizeWithAI() {
+  if (allTabs.length === 0) {
+    showAIError("No tabs to organize");
+    return;
+  }
+
+  openAIModal();
+  showAILoading();
+
+  chrome.runtime.sendMessage(
+    { action: "groupTabs", tabs: allTabs },
+    (response) => {
+      if (response?.error) {
+        showAIError(response.error);
+      } else if (response?.length > 0) {
+        currentAIGroups = response;
+        displayAIGroups(response);
+      } else {
+        showAIError("No groups received from AI");
+      }
+    }
+  );
+}
+
+function showAILoading() {
+  document.getElementById("ai-loading")?.classList.remove("hidden");
+  document.getElementById("ai-groups-list")?.classList.add("hidden");
+  document.getElementById("ai-error")?.classList.add("hidden");
+  document.getElementById("modal-apply-btn").disabled = true;
+}
+
+function showAIError(message) {
+  document.getElementById("ai-loading")?.classList.add("hidden");
+  document.getElementById("ai-groups-list")?.classList.add("hidden");
+  document.getElementById("ai-error")?.classList.remove("hidden");
+  document.getElementById("ai-error-text").textContent = message;
+  document.getElementById("modal-apply-btn").disabled = true;
+}
+
+function displayAIGroups(groups) {
+  document.getElementById("ai-loading")?.classList.add("hidden");
+  document.getElementById("ai-error")?.classList.add("hidden");
+  document.getElementById("ai-groups-list")?.classList.remove("hidden");
+  document.getElementById("modal-apply-btn").disabled = false;
+
+  const groupsList = document.getElementById("ai-groups-list");
+  groupsList.innerHTML = "";
+
+  groups.forEach(group => {
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "ai-group-item";
+
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "ai-group-name";
+    nameDiv.textContent = group.name;
+
+    const tabsDiv = document.createElement("div");
+    tabsDiv.className = "ai-group-tabs";
+
+    group.tabIds?.forEach(tabId => {
+      const tab = allTabs.find(t => t.id === tabId);
+      if (tab) {
+        const badge = document.createElement("div");
+        badge.className = "ai-tab-badge";
+        badge.title = tab.title;
+        badge.textContent = tab.title || "Untitled";
+        tabsDiv.appendChild(badge);
+      }
+    });
+
+    groupDiv.appendChild(nameDiv);
+    groupDiv.appendChild(tabsDiv);
+    groupsList.appendChild(groupDiv);
+  });
+}
+
+function applyAIGroups() {
+  if (!currentAIGroups || currentAIGroups.length === 0) return;
+
+  document.getElementById("modal-apply-btn").disabled = true;
+
+  chrome.runtime.sendMessage(
+    { action: "applyGroups", groups: currentAIGroups },
+    (response) => {
+      if (response?.error) {
+        showAIError(response.error);
+      } else {
+        closeAIModal();
+        fetchAndRenderTabs();
+      }
+      document.getElementById("modal-apply-btn").disabled = false;
+    }
+  );
 }
