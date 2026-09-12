@@ -1,4 +1,4 @@
-avaScript
+
 let allTabs = [];
 
 document.addEventListener('DOMContentLoaded', () => {
