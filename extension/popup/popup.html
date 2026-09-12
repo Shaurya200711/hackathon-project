@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>zenQT</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+  />
+
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+  <div class="app-layout">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="material-symbols-outlined brand-icon">tab</span>
+        <h1 class="brand-title">zenQT</h1>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button id="nav-all" class="nav-item active">
+          <span class="material-symbols-outlined">tabs</span>
+          <span>All Open Tabs</span>
+          <span id="nav-count-all" class="nav-badge">0</span>
+        </button>
+        <button id="nav-audio" class="nav-item">
+          <span class="material-symbols-outlined">volume_up</span>
+          <span>Audio Playing</span>
+          <span id="nav-count-audio" class="nav-badge">0</span>
+        </button>
+        <button id="nav-pinned" class="nav-item">
+          <span class="material-symbols-outlined">push_pin</span>
+          <span>Pinned Tabs</span>
+          <span id="nav-count-pinned" class="nav-badge">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="theme-toggle-btn" class="theme-toggle" type="button">
+          <span class="material-symbols-outlined light-icon">light_mode</span>
+          <span class="material-symbols-outlined dark-icon">dark_mode</span>
+          <span id="theme-text">Toggle Theme</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="main-content">
+      
+      <!-- TOP TOOLBAR -->
+      <header class="app-header">
+        <div class="search-container" role="search">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input
+            type="search"
+            id="search-input"
+            placeholder="Search tabs..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="clear-search-btn" class="icon-btn hidden" type="button">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="header-actions">
+          
+          <!-- GROUP DROPDOWN -->
+          <div class="dropdown">
+            <button id="group-btn" class="btn btn-primary dropdown-btn" type="button">
+              <span class="material-symbols-outlined">auto_awesome</span>
+              <span>Group</span>
+              <span class="material-symbols-outlined arrow">expand_more</span>
+            </button>
+            <div id="group-menu" class="dropdown-menu">
+              <button id="group-domain">
+                <span class="material-symbols-outlined">language</span>
+                Group by Domain
+              </button>
+              <button id="group-window">
+                <span class="material-symbols-outlined">window</span>
+                Group by Window
+              </button>
+              <button id="group-none">
+                <span class="material-symbols-outlined">tab_unselected</span>
+                Ungroup All
+              </button>
+            </div>
+          </div>
+
+          <!-- SORT DROPDOWN -->
+          <div class="dropdown">
+            <button id="sort-btn" class="btn btn-secondary dropdown-btn" type="button">
+              <span class="material-symbols-outlined">sort_by_alpha</span>
+              <span>Sort</span>
+              <span class="material-symbols-outlined arrow">expand_more</span>
+            </button>
+            <div id="sort-menu" class="dropdown-menu">
+              <button id="sort-domain">
+                <span class="material-symbols-outlined">language</span>
+                Sort by Website
+              </button>
+              <button id="sort-title">
+                <span class="material-symbols-outlined">title</span>
+                Sort by Title
+              </button>
+              <button id="sort-recent">
+                <span class="material-symbols-outlined">schedule</span>
+                Recently Active
+              </button>
+            </div>
+          </div>
+
+          <!-- CLEAN UP DROPDOWN -->
+          <div class="dropdown">
+            <button id="dedup-btn" class="btn btn-secondary dropdown-btn" type="button">
+              <span class="material-symbols-outlined">content_copy</span>
+              <span>Clean Up</span>
+              <span class="material-symbols-outlined arrow">expand_more</span>
+            </button>
+            <div id="dedup-menu" class="dropdown-menu">
+              <button id="dedup-url">
+                <span class="material-symbols-outlined">link</span>
+                Close Duplicate URLs
+              </button>
+              <button id="dedup-domain">
+                <span class="material-symbols-outlined">domain</span>
+                Keep 1 Tab per Domain
+              </button>
+            </div>
+          </div>
+
+          <!-- MULTI-SELECT UTILITIES -->
+          <button id="close-selected-btn" class="btn btn-danger hidden" type="button">
+            <span class="material-symbols-outlined">delete</span>
+            <span>Close (<span id="selected-count">0</span>)</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB GRID/LIST -->
+      <main class="app-body">
+        <div class="toolbar-secondary">
+          <div class="view-controls">
+            <h2 id="section-title">All Open Tabs</h2>
+          </div>
+          <div class="quick-actions">
+            <button id="select-all-btn" class="btn btn-link">Select All</button>
+            <button id="new-tab-btn" class="btn btn-secondary">
+              <span class="material-symbols-outlined">add</span>
+              New Tab
+            </button>
+          </div>
+        </div>
+
+        <div class="list-wrapper">
+          <div id="tab-list" class="tab-grid"></div>
+
+          <div id="empty-state" class="empty-state hidden">
+            <span class="material-symbols-outlined">tab_unselected</span>
+            <h3>No Tabs Found</h3>
+            <p>No tabs match your active query or filter category.</p>
+          </div>
+        </div>
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="app-footer">
+        <div class="badge-group">
+          <span id="tab-count" class="badge">0 tabs total</span>
+          <span class="dot-separator">•</span>
+          <span id="window-count" class="badge-subtle">0 active windows</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
