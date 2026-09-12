@@ -1,7 +1,7 @@
-# TabFlow 🌊
+# zenQT🌊
 > **Your Browser, Organized Instantly.**
 
-TabFlow is a lightweight, client-side Chrome Extension built to eliminate tab overload. It acts as a command center for your browser, utilizing Chrome's native DOM APIs to instantly categorize your workspace, execute real-time fuzzy searches, and automatically group related tabs with a single click.
+zenQT is a lightweight, client-side Chrome Extension built to eliminate tab overload. It acts as a command center for your browser, utilizing Chrome's native DOM APIs to instantly categorize your workspace, execute real-time fuzzy searches, and automatically group related tabs with a single click.
 
 ## ✨ Features
 
