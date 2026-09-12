@@ -1,263 +1,275 @@
 let allTabs = [];
+let selectedTabIds = new Set();
+let activeFilter = "all"; // 'all', 'audio', 'pinned'
 
 document.addEventListener("DOMContentLoaded", () => {
-
+  initTheme();
   fetchAndRenderTabs();
-
   setupDropdowns();
-
-  document
-    .getElementById("search-input")
-    ?.addEventListener("input", handleSearch);
-
-  document
-    .getElementById("clear-search-btn")
-    ?.addEventListener("click", clearSearch);
-
-  document
-    .getElementById("popout-btn")
-    ?.addEventListener("click", openPopout);
-
-
-  // GROUP OPTIONS
-  document
-    .getElementById("group-domain")
-    ?.addEventListener("click", () => {
-      groupByDomain();
-      closeDropdowns();
-    });
-
-  document
-    .getElementById("group-window")
-    ?.addEventListener("click", () => {
-      groupByWindow();
-      closeDropdowns();
-    });
-
-  document
-    .getElementById("group-none")
-    ?.addEventListener("click", () => {
-      removeGroups();
-      closeDropdowns();
-    });
-
-
-  // SORT OPTIONS
-  document
-    .getElementById("sort-domain")
-    ?.addEventListener("click", () => {
-      sortByDomain();
-      closeDropdowns();
-    });
-
-  document
-    .getElementById("sort-title")
-    ?.addEventListener("click", () => {
-      sortByTitle();
-      closeDropdowns();
-    });
-
-  document
-    .getElementById("sort-recent")
-    ?.addEventListener("click", () => {
-      sortByRecent();
-      closeDropdowns();
-    });
-
-
-  // DEDUPE OPTIONS
-  document
-    .getElementById("dedup-url")
-    ?.addEventListener("click", () => {
-      deduplicateURLs();
-      closeDropdowns();
-    });
-
-  document
-    .getElementById("dedup-domain")
-    ?.addEventListener("click", () => {
-      deduplicateDomains();
-      closeDropdowns();
-    });
-
+  setupNavigation();
+  setupGlobalActions();
 });
 
+// =============================
+// THEME MANAGEMENT
+// =============================
+
+function initTheme() {
+  const savedTheme = localStorage.getItem("tabflow_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+
+  document.getElementById("theme-toggle-btn")?.addEventListener("click", () => {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("tabflow_theme", nextTheme);
+  });
+}
 
 // =============================
-// DROPDOWNS
+// NAVIGATION & FILTERS
+// =============================
+
+function setupNavigation() {
+  const navItems = {
+    "nav-all": "all",
+    "nav-audio": "audio",
+    "nav-pinned": "pinned"
+  };
+
+  Object.keys(navItems).forEach(id => {
+    document.getElementById(id)?.addEventListener("click", (e) => {
+      document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      
+      activeFilter = navItems[id];
+      updateSectionTitle();
+      applyFiltersAndRender();
+    });
+  });
+}
+
+function updateSectionTitle() {
+  const titleMap = {
+    all: "All Open Tabs",
+    audio: "Tabs Playing Audio",
+    pinned: "Pinned Tabs"
+  };
+  const titleEl = document.getElementById("section-title");
+  if (titleEl) titleEl.textContent = titleMap[activeFilter] || "Tabs";
+}
+
+// =============================
+// GLOBAL EVENT HANDLERS
+// =============================
+
+function setupGlobalActions() {
+  document.getElementById("search-input")?.addEventListener("input", handleSearch);
+  document.getElementById("clear-search-btn")?.addEventListener("click", clearSearch);
+  
+  document.getElementById("new-tab-btn")?.addEventListener("click", () => {
+    chrome.tabs.create({});
+  });
+
+  document.getElementById("select-all-btn")?.addEventListener("click", () => {
+    const filtered = getFilteredTabs();
+    if (selectedTabIds.size === filtered.length) {
+      selectedTabIds.clear();
+    } else {
+      filtered.forEach(tab => selectedTabIds.add(tab.id));
+    }
+    applyFiltersAndRender();
+  });
+
+  document.getElementById("close-selected-btn")?.addEventListener("click", closeSelectedTabs);
+
+  // Group Handlers
+  document.getElementById("group-domain")?.addEventListener("click", () => { groupByDomain(); closeDropdowns(); });
+  document.getElementById("group-window")?.addEventListener("click", () => { groupByWindow(); closeDropdowns(); });
+  document.getElementById("group-none")?.addEventListener("click", () => { removeGroups(); closeDropdowns(); });
+
+  // Sort Handlers
+  document.getElementById("sort-domain")?.addEventListener("click", () => { sortByDomain(); closeDropdowns(); });
+  document.getElementById("sort-title")?.addEventListener("click", () => { sortByTitle(); closeDropdowns(); });
+  document.getElementById("sort-recent")?.addEventListener("click", () => { sortByRecent(); closeDropdowns(); });
+
+  // Dedupe Handlers
+  document.getElementById("dedup-url")?.addEventListener("click", () => { deduplicateURLs(); closeDropdowns(); });
+  document.getElementById("dedup-domain")?.addEventListener("click", () => { deduplicateDomains(); closeDropdowns(); });
+}
+
+// =============================
+// DROPDOWNS MANAGEMENT
 // =============================
 
 function setupDropdowns() {
-
   const dropdownButtons = document.querySelectorAll(".dropdown-btn");
 
   dropdownButtons.forEach(button => {
-
     button.addEventListener("click", (event) => {
-
       event.stopPropagation();
-
       const dropdown = button.closest(".dropdown");
 
       document.querySelectorAll(".dropdown").forEach(item => {
-
-        if (item !== dropdown) {
-          item.classList.remove("active");
-        }
-
+        if (item !== dropdown) item.classList.remove("active");
       });
 
       dropdown.classList.toggle("active");
-
     });
-
   });
 
-
-  // Close dropdown when clicking outside
-  document.addEventListener("click", () => {
-    closeDropdowns();
-  });
-
+  document.addEventListener("click", () => closeDropdowns());
 }
 
-
 function closeDropdowns() {
-
   document.querySelectorAll(".dropdown").forEach(dropdown => {
     dropdown.classList.remove("active");
   });
-
 }
 
-
 // =============================
-// GET TABS
+// FETCH & RENDER
 // =============================
 
 function fetchAndRenderTabs() {
-
   chrome.tabs.query({}, tabs => {
-
     allTabs = tabs;
-
-    renderTabs(allTabs);
-
+    updateNavigationBadges();
+    applyFiltersAndRender();
   });
-
 }
 
+function updateNavigationBadges() {
+  document.getElementById("nav-count-all").textContent = allTabs.length;
+  document.getElementById("nav-count-audio").textContent = allTabs.filter(t => t.audible).length;
+  document.getElementById("nav-count-pinned").textContent = allTabs.filter(t => t.pinned).length;
+}
 
-// =============================
-// DISPLAY TABS
-// =============================
+function getFilteredTabs() {
+  const query = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+
+  return allTabs.filter(tab => {
+    // Navigation Category Filter
+    if (activeFilter === "audio" && !tab.audible) return false;
+    if (activeFilter === "pinned" && !tab.pinned) return false;
+
+    // Search Query Filter
+    if (query) {
+      const title = (tab.title || "").toLowerCase();
+      const url = (tab.url || "").toLowerCase();
+      return title.includes(query) || url.includes(query);
+    }
+
+    return true;
+  });
+}
+
+function applyFiltersAndRender() {
+  const tabsToDisplay = getFilteredTabs();
+  renderTabs(tabsToDisplay);
+}
 
 function renderTabs(tabs) {
-
   const list = document.getElementById("tab-list");
   const emptyState = document.getElementById("empty-state");
   const count = document.getElementById("tab-count");
+  const windowCount = document.getElementById("window-count");
+  const selectedBtn = document.getElementById("close-selected-btn");
+  const selectedCountEl = document.getElementById("selected-count");
 
   list.innerHTML = "";
 
-  count.textContent =
-    tabs.length + (tabs.length === 1 ? " tab" : " tabs");
+  // Stats updates
+  const uniqueWindows = new Set(allTabs.map(t => t.windowId)).size;
+  count.textContent = `${allTabs.length} ${allTabs.length === 1 ? 'tab' : 'tabs'} total`;
+  windowCount.textContent = `${uniqueWindows} active ${uniqueWindows === 1 ? 'window' : 'windows'}`;
 
-
-  if (tabs.length === 0) {
-
-    emptyState.classList.remove("hidden");
-
-    return;
-
+  // Selection state button updates
+  if (selectedTabIds.size > 0) {
+    selectedBtn.classList.remove("hidden");
+    selectedCountEl.textContent = selectedTabIds.size;
+  } else {
+    selectedBtn.classList.add("hidden");
   }
 
+  if (tabs.length === 0) {
+    emptyState.classList.remove("hidden");
+    return;
+  }
   emptyState.classList.add("hidden");
 
-
   tabs.forEach(tab => {
+    const card = document.createElement("div");
+    const isSelected = selectedTabIds.has(tab.id);
+    card.className = `tab-card ${tab.active ? 'active-tab' : ''} ${isSelected ? 'selected' : ''}`;
 
-    const li = document.createElement("li");
+    const faviconUrl = tab.favIconUrl && !tab.favIconUrl.startsWith("chrome://") 
+      ? tab.favIconUrl 
+      : "https://www.google.com/s2/favicons?sz=64&domain=chrome";
 
-    li.className = "tab-item";
-
-    li.innerHTML = `
-      <div class="tab-info">
-
-        <div class="tab-title">
-          ${escapeHTML(tab.title || "Untitled")}
-        </div>
-
-        <div class="tab-url">
-          ${escapeHTML(tab.url || "")}
-        </div>
-
+    card.innerHTML = `
+      <div class="tab-card-header">
+        <input type="checkbox" class="tab-checkbox" data-id="${tab.id}" ${isSelected ? 'checked' : ''} />
+        <img class="tab-favicon" src="${escapeHTML(faviconUrl)}" alt="" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=chrome'" />
+        <div class="tab-title" title="${escapeHTML(tab.title || "Untitled")}">${escapeHTML(tab.title || "Untitled")}</div>
       </div>
 
-      <button
-        class="close-tab"
-        data-id="${tab.id}"
-        title="Close tab"
-      >
-        <span class="material-symbols-outlined">
-          close
-        </span>
-      </button>
+      <div class="tab-card-body">
+        <div class="tab-url" title="${escapeHTML(tab.url || "")}">${escapeHTML(getDomain(tab.url) || tab.url || "")}</div>
+      </div>
+
+      <div class="tab-card-footer">
+        <div class="tab-badges">
+          ${tab.audible ? '<span class="material-symbols-outlined tab-status-icon audible" title="Playing Audio">volume_up</span>' : ''}
+          ${tab.pinned ? '<span class="material-symbols-outlined tab-status-icon" title="Pinned Tab">push_pin</span>' : ''}
+        </div>
+        <button class="icon-btn close-btn" data-id="${tab.id}" title="Close Tab">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
     `;
 
-
-    li.addEventListener("click", event => {
-
-      if (
-        event.target.closest(".close-tab")
-      ) {
-        return;
-      }
-
-      chrome.tabs.update(tab.id, {
-        active: true
-      });
-
-      chrome.windows.update(tab.windowId, {
-        focused: true
-      });
-
+    // Tab Activation Click
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".close-btn") || e.target.closest(".tab-checkbox")) return;
+      
+      chrome.tabs.update(tab.id, { active: true });
+      chrome.windows.update(tab.windowId, { focused: true });
     });
 
+    // Individual Selection Checkbox
+    card.querySelector(".tab-checkbox").addEventListener("change", (e) => {
+      e.stopPropagation();
+      if (e.target.checked) {
+        selectedTabIds.add(tab.id);
+      } else {
+        selectedTabIds.delete(tab.id);
+      }
+      applyFiltersAndRender();
+    });
 
-    li.querySelector(".close-tab")
-      .addEventListener("click", () => {
-
-        chrome.tabs.remove(tab.id);
-
-        allTabs = allTabs.filter(
-          t => t.id !== tab.id
-        );
-
-        renderTabs(allTabs);
-
+    // Close Tab Handler
+    card.querySelector(".close-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      chrome.tabs.remove(tab.id, () => {
+        allTabs = allTabs.filter(t => t.id !== tab.id);
+        selectedTabIds.delete(tab.id);
+        updateNavigationBadges();
+        applyFiltersAndRender();
       });
+    });
 
-
-    list.appendChild(li);
-
+    list.appendChild(card);
   });
-
 }
 
-
 // =============================
-// SEARCH
+// SEARCH & BULK ACTIONS
 // =============================
 
 function handleSearch(event) {
-
-  const query =
-    event.target.value.toLowerCase().trim();
-
-  const clearButton =
-    document.getElementById("clear-search-btn");
-
+  const query = event.target.value.trim();
+  const clearButton = document.getElementById("clear-search-btn");
 
   if (query) {
     clearButton.classList.remove("hidden");
@@ -265,300 +277,154 @@ function handleSearch(event) {
     clearButton.classList.add("hidden");
   }
 
-
-  const filteredTabs = allTabs.filter(tab => {
-
-    const title =
-      (tab.title || "").toLowerCase();
-
-    const url =
-      (tab.url || "").toLowerCase();
-
-    return (
-      title.includes(query) ||
-      url.includes(query)
-    );
-
-  });
-
-
-  renderTabs(filteredTabs);
-
+  applyFiltersAndRender();
 }
-
 
 function clearSearch() {
-
-  const input =
-    document.getElementById("search-input");
-
+  const input = document.getElementById("search-input");
   input.value = "";
-
-  document
-    .getElementById("clear-search-btn")
-    .classList.add("hidden");
-
-  renderTabs(allTabs);
-
+  document.getElementById("clear-search-btn").classList.add("hidden");
+  applyFiltersAndRender();
 }
 
+function closeSelectedTabs() {
+  const idsToRemove = Array.from(selectedTabIds);
+  if (idsToRemove.length === 0) return;
+
+  chrome.tabs.remove(idsToRemove, () => {
+    allTabs = allTabs.filter(tab => !selectedTabIds.has(tab.id));
+    selectedTabIds.clear();
+    updateNavigationBadges();
+    applyFiltersAndRender();
+  });
+}
 
 // =============================
-// GROUP BY DOMAIN
+// GROUPING FUNCTIONS
 // =============================
 
-function groupByDomain() {
-
+async function groupByDomain() {
   const groups = {};
 
   allTabs.forEach(tab => {
-
-    try {
-
-      const domain =
-        new URL(tab.url).hostname;
-
-      if (!groups[domain]) {
-        groups[domain] = [];
-      }
-
-      groups[domain].push(tab);
-
-    } catch {
-      console.log("Invalid URL:", tab.url);
-    }
-
+    const domain = getDomain(tab.url) || "other";
+    if (!groups[domain]) groups[domain] = [];
+    groups[domain].push(tab.id);
   });
 
-
-  console.log("Grouped tabs:", groups);
-
+  for (const [domain, tabIds] of Object.entries(groups)) {
+    if (tabIds.length > 1 && chrome.tabs.group) {
+      const groupId = await chrome.tabs.group({ tabIds });
+      chrome.tabGroups.update(groupId, { title: domain.toUpperCase() });
+    }
+  }
 }
 
-
-// =============================
-// GROUP BY WINDOW
-// =============================
-
-function groupByWindow() {
-
+async function groupByWindow() {
   const groups = {};
 
   allTabs.forEach(tab => {
-
-    if (!groups[tab.windowId]) {
-      groups[tab.windowId] = [];
-    }
-
-    groups[tab.windowId].push(tab);
-
+    if (!groups[tab.windowId]) groups[tab.windowId] = [];
+    groups[tab.windowId].push(tab.id);
   });
 
-
-  console.log("Tabs grouped by window:", groups);
-
+  for (const [windowId, tabIds] of Object.entries(groups)) {
+    if (chrome.tabs.group) {
+      const groupId = await chrome.tabs.group({ tabIds });
+      chrome.tabGroups.update(groupId, { title: `Window ${windowId}` });
+    }
+  }
 }
-
-
-// =============================
-// REMOVE GROUPS
-// =============================
 
 function removeGroups() {
-
-  console.log("Remove groups selected");
-
+  const tabIds = allTabs.map(t => t.id);
+  if (chrome.tabs.ungroup) {
+    chrome.tabs.ungroup(tabIds);
+  }
 }
 
-
 // =============================
-// SORT BY DOMAIN
+// SORTING FUNCTIONS
 // =============================
 
 function sortByDomain() {
-
-  const sortedTabs = [...allTabs].sort((a, b) => {
-
-    const domainA =
-      getDomain(a.url);
-
-    const domainB =
-      getDomain(b.url);
-
-    return domainA.localeCompare(domainB);
-
-  });
-
-  renderTabs(sortedTabs);
-
+  allTabs.sort((a, b) => getDomain(a.url).localeCompare(getDomain(b.url)));
+  applyFiltersAndRender();
 }
-
-
-// =============================
-// SORT BY TITLE
-// =============================
 
 function sortByTitle() {
-
-  const sortedTabs = [...allTabs].sort((a, b) => {
-
-    return (a.title || "").localeCompare(
-      b.title || ""
-    );
-
-  });
-
-  renderTabs(sortedTabs);
-
+  allTabs.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  applyFiltersAndRender();
 }
-
-
-// =============================
-// SORT BY RECENT
-// =============================
 
 function sortByRecent() {
-
-  const sortedTabs = [...allTabs].sort((a, b) => {
-
-    return b.lastAccessed - a.lastAccessed;
-
-  });
-
-  renderTabs(sortedTabs);
-
+  allTabs.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+  applyFiltersAndRender();
 }
 
-
 // =============================
-// DEDUPLICATE URLS
+// DEDUPLICATION FUNCTIONS
 // =============================
 
 function deduplicateURLs() {
-
   const seen = new Set();
-
   const duplicateIds = [];
 
   allTabs.forEach(tab => {
-
     if (seen.has(tab.url)) {
-
       duplicateIds.push(tab.id);
-
     } else {
-
       seen.add(tab.url);
-
     }
-
   });
 
-
   if (duplicateIds.length > 0) {
-
-    chrome.tabs.remove(duplicateIds);
-
-    allTabs = allTabs.filter(
-      tab => !duplicateIds.includes(tab.id)
-    );
-
-    renderTabs(allTabs);
-
+    chrome.tabs.remove(duplicateIds, () => {
+      allTabs = allTabs.filter(t => !duplicateIds.includes(t.id));
+      updateNavigationBadges();
+      applyFiltersAndRender();
+    });
   }
-
 }
-
-
-// =============================
-// DEDUPLICATE DOMAINS
-// =============================
 
 function deduplicateDomains() {
-
   const seen = new Set();
-
   const duplicateIds = [];
 
-
   allTabs.forEach(tab => {
-
-    const domain =
-      getDomain(tab.url);
-
+    const domain = getDomain(tab.url);
     if (!domain) return;
 
-
     if (seen.has(domain)) {
-
       duplicateIds.push(tab.id);
-
     } else {
-
       seen.add(domain);
-
     }
-
   });
-
 
   if (duplicateIds.length > 0) {
-
-    chrome.tabs.remove(duplicateIds);
-
-    allTabs = allTabs.filter(
-      tab => !duplicateIds.includes(tab.id)
-    );
-
-    renderTabs(allTabs);
-
+    chrome.tabs.remove(duplicateIds, () => {
+      allTabs = allTabs.filter(t => !duplicateIds.includes(t.id));
+      updateNavigationBadges();
+      applyFiltersAndRender();
+    });
   }
-
 }
 
-
 // =============================
-// POP OUT
-// =============================
-
-function openPopout() {
-
-  chrome.windows.create({
-    url: chrome.runtime.getURL("popup.html"),
-    type: "popup",
-    width: 600,
-    height: 700
-  });
-
-}
-
-
-// =============================
-// HELPERS
+// HELPER UTILITIES
 // =============================
 
 function getDomain(url) {
-
   try {
-
-    return new URL(url).hostname;
-
+    return new URL(url).hostname.replace("www.", "");
   } catch {
-
     return "";
-
   }
-
 }
 
-
 function escapeHTML(text) {
-
-  const div =
-    document.createElement("div");
-
+  const div = document.createElement("div");
   div.textContent = text;
-
   return div.innerHTML;
-
 }
